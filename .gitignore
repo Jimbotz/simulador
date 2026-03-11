@@ -1,0 +1,16 @@
+# datasets
+simulador/usuarios_sinteticos.csv
+*.csv
+
+# env
+.env
+.venv/
+
+# python
+__pycache__/
+*.pyc
+
+# docker secrets
+security/*.key
+
+security/

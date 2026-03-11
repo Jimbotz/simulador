@@ -1,0 +1,54 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    restart: always
+    ports:
+      - "46100:27017" # Nuevo puerto expuesto para MongoDB
+    env_file:
+      - .env
+    volumes:
+      - mongo_data:/data/db
+      - ./scripts/init-rs.sh:/docker-entrypoint-initdb.d/init-rs.sh:ro
+      - ./security/mongodb.key:/etc/mongodb.key:ro
+    command: [
+      "--replSet", "rs0", 
+      "--bind_ip_all", 
+      "--port", "27017", 
+      "--keyFile", "/etc/mongodb.key",
+      "--auth"
+    ]
+    networks:
+      - cdc_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  postgres:
+    image: postgres:15
+    container_name: postgres_dw
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: testing
+      POSTGRES_DB: datawarehouse
+    ports:
+      - "46101:5432" # Nuevo puerto expuesto para PostgreSQL
+    networks:
+      - cdc_network
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+networks:
+  cdc_network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  pg_data:
